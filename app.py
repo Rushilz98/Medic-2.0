@@ -8,14 +8,15 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
-from dotenv import load_dotenv  # Add this import for .env support
+from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables (for GOOGLE_API_KEY)
 load_dotenv()
 
-# Set up Flask app
+# Set up Flask app - minimal configuration
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key')
+# Set a simple secret key (required by Flask but not used in this app)
+app.secret_key = os.environ.get('SECRET_KEY', 'medical_chatbot_default_key')
 
 # ===========================
 # SUPPRESS WARNINGS
@@ -26,11 +27,26 @@ warnings.filterwarnings('ignore')
 # LOAD THE TRAINED MODEL
 # ===========================
 try:
+    # Find model file using multiple possible paths
+    possible_paths = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'comprehensive_disease_diagnosis_model.pkl'),
+        os.path.join(os.getcwd(), 'comprehensive_disease_diagnosis_model.pkl'),
+        'comprehensive_disease_diagnosis_model.pkl'
+    ]
+    
+    model_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            model_path = path
+            break
+    
+    if not model_path:
+        raise FileNotFoundError("Model file not found in any expected location")
+    
     # Load your trained model
-    model_data = joblib.load('comprehensive_disease_diagnosis_model.pkl')
+    model_data = joblib.load(model_path)
     
     # Extract model components
-    tier1_model = model_data['tier1_model']
     tier2_model = model_data['tier2_model']
     le = model_data['label_encoder']
     symptoms = model_data['symptoms']
@@ -40,17 +56,8 @@ try:
     print(f"Can diagnose {len(le.classes_)} disease conditions")
     print(f"Using {len(symptoms)} symptoms for diagnosis")
     
-except FileNotFoundError:
-    print("❌ ERROR: Model file not found. Please ensure 'comprehensive_disease_diagnosis_model.pkl' exists in current directory.")
-    # In production, you'd want to handle this more gracefully
-    tier1_model = None
-    tier2_model = None
-    le = None
-    symptoms = []
-    category_map = {}
 except Exception as e:
-    print(f"❌ ERROR loading model: {str(e)}")
-    tier1_model = None
+    print(f"❌ CRITICAL ERROR loading model: {str(e)}")
     tier2_model = None
     le = None
     symptoms = []
@@ -68,25 +75,22 @@ class SymptomOutput(BaseModel):
 def create_symptom_mapper():
     """Creates a chain that maps natural language symptoms to exact symptom names"""
     
-    # Get Google API key from environment (loaded from .env)
+    # Get Google API key from environment
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        raise ValueError("Google API key not configured. Please set GOOGLE_API_KEY in your .env file")
+        raise ValueError("Google API key not configured. Please set GOOGLE_API_KEY in your environment")
     
-    # Create the prompt template
-    prompt_template = """You are a medical symptom mapper. Your task is to convert casual descriptions of health symptoms into EXACT symptom names from the predefined medical list below. 
+    # Create the prompt template with improved instructions
+    prompt_template = """You are a medical symptom mapper. Convert casual symptom descriptions to EXACT symptom names from this list:
 
-STRICT INSTRUCTIONS:
-1. Analyze the user's message for health symptoms
-2. Map each symptom ONLY to the EXACT symptom names listed below
-3. EACH SYMPTOM NAME IS A COMPLETE KEYWORD - DO NOT BREAK IT INTO PARTS OR MODIFY IT
-4. If a symptom doesn't have an EXACT match in the list, OMIT it completely
-5. NEVER invent, modify, or approximate symptom names
-6. Return ONLY a JSON object with key "symptoms" containing matched symptom names
-7. DO NOT include any explanations, greetings, or additional text - ONLY the JSON
-
-ACCEPTABLE SYMPTOM NAMES (USE EXACTLY THESE - EACH IS A COMPLETE KEYWORD):
 {symptoms}
+
+STRICT RULES:
+- ONLY return symptoms that EXACTLY match the list above
+- NEVER modify, abbreviate, or create new symptom names
+- RETURN ONLY JSON with key "symptoms" containing matched symptom names
+- IGNORE symptoms that don't have an EXACT match
+- DO NOT add explanations or greetings
 
 Example input: "I've been having trouble catching my breath and my chest feels tight"
 Example output: {{"symptoms": ["shortness of breath", "chest tightness"]}}
@@ -94,14 +98,8 @@ Example output: {{"symptoms": ["shortness of breath", "chest tightness"]}}
 Example input: "I feel dizzy and I can't sleep well at night"
 Example output: {{"symptoms": ["dizziness", "insomnia"]}}
 
-Example input: "My heart is racing and I feel anxious"
-Example output: {{"symptoms": ["increased heart rate", "anxiety and nervousness"]}}
-
-Example input: "I've got chest pain that's really sharp"
-Example output: {{"symptoms": ["sharp chest pain"]}}
-
-Example input: "I feel really tired all the time"
-Example output: {{"symptoms": ["fatigue"]}}
+Example input: "My heart is racing"
+Example output: {{"symptoms": ["increased heart rate"]}}
 
 Now process this input:
 {user_input}"""
@@ -116,8 +114,8 @@ Now process this input:
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-pro-latest",
         temperature=0.1,
-        convert_system_message_to_human=True,
-        google_api_key=api_key
+        google_api_key=api_key,
+        max_retries=3
     )
     
     # Set up the output parser
@@ -131,17 +129,14 @@ Now process this input:
 def map_symptoms(user_input):
     """Map casual symptom descriptions to exact symptom names using LLM"""
     
-    # Format the symptoms list for the prompt
-    symptoms_str = ", ".join([f'"{symptom}"' for symptom in symptoms])
+    # Format the symptoms list for the prompt (simplified format)
+    symptoms_str = "\n".join([f"- {symptom}" for symptom in symptoms])
     
     try:
-        # Get Google API key from environment (loaded from .env)
+        # Get Google API key from environment
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            api_key = os.environ.get("GOOGLE_API_KEY")
-            
-        if not api_key:
-            return {"symptoms": [], "error": "Google API key is missing. Please set GOOGLE_API_KEY in your .env file"}
+            return {"symptoms": [], "error": "Google API key is missing"}
         
         # Create the symptom mapper chain
         symptom_mapper = create_symptom_mapper()
@@ -152,8 +147,14 @@ def map_symptoms(user_input):
             "symptoms": symptoms_str
         })
         
-        # Filter to ensure only valid symptoms are returned
-        valid_symptoms = [symptom for symptom in result["symptoms"] if symptom in symptoms]
+        # Filter to ensure only valid symptoms are returned (case-insensitive matching)
+        valid_symptoms = []
+        for symptom in result.get("symptoms", []):
+            # Case-insensitive matching
+            for valid_symptom in symptoms:
+                if symptom.lower().strip() == valid_symptom.lower().strip():
+                    valid_symptoms.append(valid_symptom)
+                    break
         
         return {"symptoms": valid_symptoms}
     except Exception as e:
@@ -173,7 +174,7 @@ def predict_disease(symptoms_input, top_n=3):
     Returns:
         List of top predicted diseases with confidence
     """
-    if not symptoms_input or not symptoms or tier2_model is None or le is None:
+    if not symptoms or not tier2_model or not le:
         return []
     
     # Convert input to standard format
@@ -195,7 +196,7 @@ def predict_disease(symptoms_input, top_n=3):
         disease = le.classes_[idx]
         confidence = tier2_proba[idx]
         
-        # Format disease name (remove technical terms)
+        # Format disease name
         display_name = category_map.get(disease, disease)
         display_name = display_name.replace('_rare_variant', ' (rare variant)')
         
@@ -249,18 +250,28 @@ def api_predict():
     predictions = predict_disease(symptoms)
     return jsonify({"predictions": predictions})
 
-if __name__ == '__main__':
-    # Check if GOOGLE_API_KEY is set
-    if not os.getenv("GOOGLE_API_KEY"):
-        print("\n⚠️ WARNING: GOOGLE_API_KEY not found in environment variables!")
-        print("Get an API key from: https://aistudio.google.com/app/apikey\n")
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Render"""
+    model_loaded = tier2_model is not None and le is not None and len(symptoms) > 0
+    api_key_set = bool(os.getenv("GOOGLE_API_KEY"))
     
+    status = {
+        "status": "healthy" if model_loaded and api_key_set else "unhealthy",
+        "model_loaded": model_loaded,
+        "api_key_set": api_key_set,
+        "symptom_count": len(symptoms) if symptoms else 0
+    }
+    
+    return jsonify(status), 200 if model_loaded and api_key_set else 503
+
+if __name__ == '__main__':
     # Get port from environment - Render sets this automatically
     port = int(os.environ.get('PORT', 5000))
     
-    # Run the app with proper production settings
+    # Run the app
     app.run(
         host='0.0.0.0',
         port=port,
-        debug=False  # Never run debug=True in production
+        debug=False
     )

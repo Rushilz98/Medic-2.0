@@ -10,3 +10,4 @@ services:
     envVars:
       - key: PORT
         generateValue: true
+    healthCheckPath: /health
