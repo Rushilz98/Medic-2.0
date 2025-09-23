@@ -10,13 +10,12 @@ from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-# Load environment variables (for GOOGLE_API_KEY)
+# Load environment variables from .env file
 load_dotenv()
 
-# Set up Flask app - minimal configuration
+# Set up Flask app
 app = Flask(__name__)
-# Set a simple secret key (required by Flask but not used in this app)
-app.secret_key = os.environ.get('SECRET_KEY', 'medical_chatbot_default_key')
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key')
 
 # ===========================
 # SUPPRESS WARNINGS
@@ -27,26 +26,14 @@ warnings.filterwarnings('ignore')
 # LOAD THE TRAINED MODEL
 # ===========================
 try:
-    # Find model file using multiple possible paths
-    possible_paths = [
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'comprehensive_disease_diagnosis_model.pkl'),
-        os.path.join(os.getcwd(), 'comprehensive_disease_diagnosis_model.pkl'),
-        'comprehensive_disease_diagnosis_model.pkl'
-    ]
-    
-    model_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            model_path = path
-            break
-    
-    if not model_path:
-        raise FileNotFoundError("Model file not found in any expected location")
+    # Get absolute path to model file
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'comprehensive_disease_diagnosis_model.pkl')
     
     # Load your trained model
     model_data = joblib.load(model_path)
     
     # Extract model components
+    tier1_model = model_data['tier1_model']
     tier2_model = model_data['tier2_model']
     le = model_data['label_encoder']
     symptoms = model_data['symptoms']
@@ -58,10 +45,13 @@ try:
     
 except Exception as e:
     print(f"❌ CRITICAL ERROR loading model: {str(e)}")
+    tier1_model = None
     tier2_model = None
     le = None
     symptoms = []
     category_map = {}
+    # Don't crash the app - just show a warning
+    print("⚠️ WARNING: Model failed to load. The app will run but disease prediction won't work.")
 
 # ===========================
 # SYMPTOM OUTPUT SCHEMA
@@ -75,10 +65,10 @@ class SymptomOutput(BaseModel):
 def create_symptom_mapper():
     """Creates a chain that maps natural language symptoms to exact symptom names"""
     
-    # Get Google API key from environment
+    # Get Google API key from environment (loaded from .env)
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        raise ValueError("Google API key not configured. Please set GOOGLE_API_KEY in your environment")
+        raise ValueError("Google API key not configured. Please set GOOGLE_API_KEY in your .env file")
     
     # Create the prompt template with improved instructions
     prompt_template = """You are a medical symptom mapper. Convert casual symptom descriptions to EXACT symptom names from this list:
@@ -174,7 +164,9 @@ def predict_disease(symptoms_input, top_n=3):
     Returns:
         List of top predicted diseases with confidence
     """
+    # Check if model is properly loaded
     if not symptoms or not tier2_model or not le:
+        print("❌ Model not properly loaded for prediction")
         return []
     
     # Convert input to standard format
@@ -246,6 +238,10 @@ def api_predict():
     
     if not symptoms:
         return jsonify({"error": "No symptoms provided"}), 400
+    
+    # Check if model is properly loaded
+    if not symptoms or not tier2_model or not le:
+        return jsonify({"error": "Model not loaded properly. Prediction unavailable."}), 500
     
     predictions = predict_disease(symptoms)
     return jsonify({"predictions": predictions})
