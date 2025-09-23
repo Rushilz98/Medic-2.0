@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: medical-chatbot
+    region: oregon
+    runtime: python
+    env: production
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python app.py"
+    envVars:
+      - key: PORT
+        generateValue: true

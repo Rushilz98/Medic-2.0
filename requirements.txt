@@ -1,0 +1,7 @@
+flask
+joblib
+numpy
+langchain-google-genai
+pydantic
+python-dotenv
+google-generativeai
