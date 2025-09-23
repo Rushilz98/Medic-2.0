@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Disclaimer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="fas fa-heartbeat me-2"></i>
+                <span>Medical Advisor</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Chat</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/disclaimer">Disclaimer</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Disclaimer Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="text-center mb-5">
+                        <div class="avatar bg-danger text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                        <h1 class="mb-3">Medical Disclaimer</h1>
+                        <p class="lead">Important information about the use of Medical Advisor</p>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h2 class="h4 mb-3 d-flex align-items-center">
+                                <i class="fas fa-user-md text-danger me-2"></i>
+                                Not Medical Advice
+                            </h2>
+                            <p class="mb-0">The information provided by Medical Advisor is for general informational purposes only and is not intended as, and must not be taken as, medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h2 class="h4 mb-3 d-flex align-items-center">
+                                <i class="fas fa-ban text-danger me-2"></i>
+                                Limitations
+                            </h2>
+                            <p>Medical Advisor has the following important limitations:</p>
+                            <ul>
+                                <li>It is not a substitute for professional medical advice, diagnosis, or treatment</li>
+                                <li>It does not establish a doctor-patient relationship</li>
+                                <li>It cannot provide emergency medical help</li>
+                                <li>It may not recognize all symptoms or conditions</li>
+                                <li>It does not replace the judgment of a qualified healthcare professional</li>
+                            </ul>
+                            <p class="mb-0">If you think you may have a medical emergency, call your doctor, go to the emergency department, or call emergency services immediately.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h2 class="h4 mb-3 d-flex align-items-center">
+                                <i class="fas fa-user-clock text-danger me-2"></i>
+                                No Physician-Patient Relationship
+                            </h2>
+                            <p class="mb-0">Your use of Medical Advisor does not create a physician-patient relationship between you and Medical Advisor, its owners, or its employees. Medical Advisor does not recommend or endorse any specific tests, physicians, products, procedures, opinions, or other information that may be mentioned on the site.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h2 class="h4 mb-3 d-flex align-items-center">
+                                <i class="fas fa-shield-alt text-danger me-2"></i>
+                                Accuracy & Reliability
+                            </h2>
+                            <p>While we strive to provide accurate information, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability with respect to the information, products, services, or related graphics contained on Medical Advisor for any purpose.</p>
+                            <p class="mb-0">In no event will Medical Advisor, its owners, or its employees be liable for any loss or damage including without limitation, indirect or consequential loss or damage, or any loss or damage whatsoever arising from loss of data or profits arising out of, or in connection with, the use of Medical Advisor.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h2 class="h4 mb-3 d-flex align-items-center">
+                                <i class="fas fa-clipboard-check text-danger me-2"></i>
+                                Your Responsibility
+                            </h2>
+                            <p>By using Medical Advisor, you agree that:</p>
+                            <ol>
+                                <li>You will not use the information provided as a basis for personal medical decisions without consulting a healthcare professional</li>
+                                <li>You understand that AI systems can make errors and should not be solely relied upon for medical decisions</li>
+                                <li>You will seek immediate professional help for any emergency medical conditions</li>
+                                <li>You are responsible for verifying any information obtained through Medical Advisor with a qualified healthcare provider</li>
+                            </ol>
+                            <p class="mb-0">Your health is important. When in doubt, always consult with a healthcare professional.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-5">
+                        <a href="/" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-comment-medical me-2"></i>
+                            Return to Assessment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white pt-5 pb-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5 class="mb-4 d-flex align-items-center">
+                        <i class="fas fa-heartbeat me-2"></i>
+                        Medical Advisor
+                    </h5>
+                    <p>AI-powered health assessment tool designed to help identify potential conditions based on symptoms. Always consult with a healthcare professional for medical advice.</p>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5 class="mb-4">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/" class="text-white text-decoration-none">Home</a></li>
+                        <li class="mb-2"><a href="/about" class="text-white text-decoration-none">About</a></li>
+                        <li class="mb-2"><a href="/disclaimer" class="text-white text-decoration-none">Disclaimer</a></li>
+                        <li class="mb-2"><a href="/" class="text-white text-decoration-none">Start Assessment</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5 class="mb-4">Contact</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2 d-flex">
+                            <i class="fas fa-envelope me-2 mt-1"></i>
+                            <span>support@medicaladvisor.com</span>
+                        </li>
+                        <li class="mb-2 d-flex">
+                            <i class="fas fa-globe me-2 mt-1"></i>
+                            <span>www.medicaladvisor.com</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook fa-2x"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter fa-2x"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-linkedin fa-2x"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <p>&copy; 2023 Medical Advisor. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="/disclaimer" class="text-white text-decoration-none me-3">Disclaimer</a>
+                    <a href="#" class="text-white text-decoration-none me-3">Privacy Policy</a>
+                    <a href="#" class="text-white text-decoration-none">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
