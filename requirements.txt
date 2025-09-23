@@ -1,6 +1,7 @@
 flask
 joblib
 numpy
+langchain
 langchain-google-genai
 pydantic
 python-dotenv

@@ -252,10 +252,15 @@ def api_predict():
 if __name__ == '__main__':
     # Check if GOOGLE_API_KEY is set
     if not os.getenv("GOOGLE_API_KEY"):
-        print("\n⚠️ WARNING: GOOGLE_API_KEY not found in .env file!")
-        print("Please create a .env file in the project root with:")
-        print("GOOGLE_API_KEY=your_actual_api_key_here")
+        print("\n⚠️ WARNING: GOOGLE_API_KEY not found in environment variables!")
         print("Get an API key from: https://aistudio.google.com/app/apikey\n")
     
-    # Run the app
-    app.run(debug=True, port=5000)
+    # Get port from environment - Render sets this automatically
+    port = int(os.environ.get('PORT', 5000))
+    
+    # Run the app with proper production settings
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=False  # Never run debug=True in production
+    )
