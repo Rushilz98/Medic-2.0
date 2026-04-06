@@ -163,96 +163,42 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (data.symptoms && data.symptoms.length > 0) {
-                addMessage(`I've identified the following symptoms from your description. Would you like me to analyze these for potential conditions?`);
+                // AUTO-ANALYZE: Automatically call the trained model
+                const currentSymptoms = data.symptoms;
                 
-                // Show symptoms in a formatted way
-                let symptomsText = '<div class="mt-2 mt-lg-2">';
-                data.symptoms.forEach(symptom => {
-                    symptomsText += `<div class="symptom-item p-2 mb-2 bg-light rounded d-flex align-items-center">
-                                        <i class="fas fa-check-circle text-success me-2"></i> 
-                                        ${symptom}
-                                      </div>`;
-                });
-                symptomsText += '</div>';
+                // Add a small message to show progress
+                addMessage(`I've identified these symptoms: **${currentSymptoms.join(', ')}**. Analyzing potential conditions now...`);
                 
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'chat-message mb-3 system';
-                messageDiv.innerHTML = `
-                    <div class="d-flex align-items-start">
-                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 me-lg-3" 
-                             style="width: 36px; height: 36px; font-size: 0.9rem;">
-                            <i class="fas fa-heartbeat"></i>
-                        </div>
-                        <div class="message bg-white border rounded p-2 p-lg-3">
-                            <p class="mb-2 fw-bold">Detected Symptoms:</p>
-                            ${symptomsText}
-                            <div class="mt-2 mt-lg-3 d-flex flex-column flex-sm-row gap-2">
-                                <button class="analyze-btn btn btn-primary btn-sm w-100">
-                                    <i class="fas fa-stethoscope me-1"></i> Analyze Conditions
-                                </button>
-                                <button class="rephrase-btn btn btn-outline-secondary btn-sm w-100">
-                                    <i class="fas fa-redo me-1"></i> Rephrase
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                // Show loading state again for the prediction
+                showLoading();
                 
-                chatContainer.appendChild(messageDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                
-                // Get references to the specific buttons in this message
-                const analyzeBtn = messageDiv.querySelector('.analyze-btn');
-                const rephraseBtn = messageDiv.querySelector('.rephrase-btn');
-                
-                // Add event listeners to these specific buttons
-                analyzeBtn.addEventListener('click', function() {
-                    const btn = this;
-                    // Store the current symptoms for this specific analysis
-                    const currentSymptoms = data.symptoms;
+                // Send to prediction API with current symptoms automatically
+                fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ symptoms: currentSymptoms })
+                })
+                .then(predictionResponse => {
+                    if (!predictionResponse.ok) {
+                        throw new Error('Prediction API error');
+                    }
+                    return predictionResponse.json();
+                })
+                .then(predictionData => {
+                    removeLoading();
                     
-                    // Show loading state
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Analyzing...';
-                    btn.disabled = true;
-                    
-                    // Send to prediction API with current symptoms
-                    fetch('/api/predict', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ symptoms: currentSymptoms })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Prediction API error');
-                        }
-                        return response.json();
-                    })
-                    .then(predictionData => {
-                        // Reset button state
-                        btn.innerHTML = '<i class="fas fa-stethoscope me-1"></i> Analyze Conditions';
-                        btn.disabled = false;
-                        
-                        // Show results with current symptoms
-                        displayResults({
-                            symptoms: currentSymptoms,
-                            predictions: predictionData.predictions
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Prediction error:', error);
-                        
-                        // Reset button state
-                        btn.innerHTML = '<i class="fas fa-stethoscope me-1"></i> Analyze Conditions';
-                        btn.disabled = false;
-                        
-                        addMessage('I encountered an error analyzing potential conditions. Please try again later.');
+                    // Show results with current symptoms
+                    displayResults({
+                        symptoms: currentSymptoms,
+                        predictions: predictionData.predictions
                     });
-                });
-                
-                rephraseBtn.addEventListener('click', function() {
-                    userInput.focus();
+                })
+                .catch(error => {
+                    removeLoading();
+                    console.error('Prediction error:', error);
+                    addMessage('I encountered an error analyzing potential conditions with the trained model. Please try again later.');
                 });
             } else {
                 addMessage(`I couldn't identify any specific symptoms from your description. Could you please describe what you're experiencing in more detail? For example: "I've been having chest pain and trouble breathing for the past two days."`);
