@@ -100,9 +100,9 @@ Now process this input:
         input_variables=["user_input", "symptoms"]
     )
     
-    # Initialize the Gemini model - Using 1.5 Flash for maximum stability
+    # Initialize the Gemini model - Using 2.5 Flash for the 2026 environment
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash",
         temperature=0.1,
         google_api_key=api_key,
         max_retries=3
