@@ -102,7 +102,7 @@ Now process this input:
     
     # Initialize the Gemini model
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-pro-latest",
+        model="gemini-2.5-flash",
         temperature=0.1,
         google_api_key=api_key,
         max_retries=3
