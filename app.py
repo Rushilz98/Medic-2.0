@@ -100,9 +100,9 @@ Now process this input:
         input_variables=["user_input", "symptoms"]
     )
     
-    # Initialize the Gemini model
+    # Initialize the Gemini model - Using 1.5 Flash for maximum stability
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         temperature=0.1,
         google_api_key=api_key,
         max_retries=3
@@ -126,28 +126,37 @@ def map_symptoms(user_input):
         # Get Google API key from environment
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
+            print("❌ DEBUG: GOOGLE_API_KEY is missing from environment")
             return {"symptoms": [], "error": "Google API key is missing"}
         
         # Create the symptom mapper chain
         symptom_mapper = create_symptom_mapper()
         
         # Get the mapped symptoms
+        print(f"🔍 DEBUG: Mapping user input: '{user_input}'")
         result = symptom_mapper.invoke({
             "user_input": user_input,
             "symptoms": symptoms_str
         })
         
-        # Filter to ensure only valid symptoms are returned (case-insensitive matching)
+        raw_mapped = result.get("symptoms", [])
+        print(f"🔍 DEBUG: Gemini raw output: {raw_mapped}")
+        
+        # Filter to ensure only valid symptoms are returned (robust case-insensitive matching)
         valid_symptoms = []
-        for symptom in result.get("symptoms", []):
-            # Case-insensitive matching
+        for symptom in raw_mapped:
+            # Clean and normalize
+            cleaned_symptom = symptom.lower().strip().replace('_', ' ').replace('-', ' ')
             for valid_symptom in symptoms:
-                if symptom.lower().strip() == valid_symptom.lower().strip():
+                target_symptom = valid_symptom.lower().strip().replace('_', ' ').replace('-', ' ')
+                if cleaned_symptom == target_symptom:
                     valid_symptoms.append(valid_symptom)
                     break
         
+        print(f"✅ DEBUG: Final matched symptoms: {valid_symptoms}")
         return {"symptoms": valid_symptoms}
     except Exception as e:
+        print(f"❌ DEBUG: Error in map_symptoms: {str(e)}")
         return {"symptoms": [], "error": str(e)}
 
 # ===========================
