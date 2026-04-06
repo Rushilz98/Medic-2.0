@@ -3,6 +3,8 @@ joblib
 numpy
 scikit-learn
 langchain
+langchain-core
+langchain-community
 langchain-google-genai
 pydantic
 python-dotenv
