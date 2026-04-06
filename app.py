@@ -129,6 +129,10 @@ def map_symptoms(user_input):
             print("❌ DEBUG: GOOGLE_API_KEY is missing from environment")
             return {"symptoms": [], "error": "Google API key is missing"}
         
+        if not symptoms:
+            print("❌ DEBUG: THE SYMPTOM LIST IS EMPTY. Model might not have loaded correctly.")
+            return {"symptoms": [], "error": "System initialization error"}
+
         # Create the symptom mapper chain
         symptom_mapper = create_symptom_mapper()
         
@@ -142,16 +146,31 @@ def map_symptoms(user_input):
         raw_mapped = result.get("symptoms", [])
         print(f"🔍 DEBUG: Gemini raw output: {raw_mapped}")
         
-        # Filter to ensure only valid symptoms are returned (robust case-insensitive matching)
+        # LENIENT MATCHING: Use fuzzy/substring matching if exact match fails
         valid_symptoms = []
         for symptom in raw_mapped:
-            # Clean and normalize
             cleaned_symptom = symptom.lower().strip().replace('_', ' ').replace('-', ' ')
+            
+            # 1. Try Exact/Normalized match
+            found = False
             for valid_symptom in symptoms:
                 target_symptom = valid_symptom.lower().strip().replace('_', ' ').replace('-', ' ')
                 if cleaned_symptom == target_symptom:
                     valid_symptoms.append(valid_symptom)
+                    found = True
                     break
+            
+            # 2. Try Substring/Keyword match (Lenient)
+            if not found:
+                for valid_symptom in symptoms:
+                    target_symptom = valid_symptom.lower().strip().replace('_', ' ').replace('-', ' ')
+                    if cleaned_symptom in target_symptom or target_symptom in cleaned_symptom:
+                        valid_symptoms.append(valid_symptom)
+                        found = True
+                        break
+        
+        # Final set to remove duplicates
+        valid_symptoms = list(set(valid_symptoms))
         
         print(f"✅ DEBUG: Final matched symptoms: {valid_symptoms}")
         return {"symptoms": valid_symptoms}
